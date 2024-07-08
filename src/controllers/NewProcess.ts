@@ -6,18 +6,15 @@ import axios from "axios";
 import async from "async";
 import Request from "../modal/Request";
 import uniqid from "uniqid";
-import stream from 'stream'
-
 
 class NewProcess {
   SendNewProcess = async (req: express.Request, res: express.Response) => {
     try {
-      const file = req.file;
+      const filePath = req.file?.path;
 
-      if (!file) {
-        return res.send("error in file , try again!");
+      if (!filePath) {
+        return res.send("error in file , try agian !");
       }
-
 
       const UniqueId = uniqid();
       await Request.create({
@@ -28,11 +25,10 @@ class NewProcess {
       const Process = async () => {
         const results: any[] = [];
 
-        const bufferStream = new stream.PassThrough();
-        bufferStream.end(file.buffer);
+        const readStream = fs.createReadStream(filePath);
         const parser = csv();
 
-        bufferStream.pipe(parser);
+        readStream.pipe(parser);
 
         let headersValidated = false;
         const expectedHeaders = ["S.No.", "Product Name", "Input Image Urls"];
@@ -42,7 +38,7 @@ class NewProcess {
             (header, index) => header === headers[index]
           );
           if (!headersValidated) {
-            bufferStream.destroy();
+            readStream.destroy();
             res
               .status(400)
               .send(
@@ -106,7 +102,11 @@ class NewProcess {
               }
             );
 
-           
+            fs.unlink(filePath, (err) => {
+              if (err) {
+                console.error(err);
+              }
+            });
           });
         });
       };
