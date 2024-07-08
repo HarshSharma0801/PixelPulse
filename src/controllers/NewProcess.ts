@@ -2,7 +2,6 @@ import express from "express";
 import ProcessImage from "../process";
 import fs from "fs";
 import csv from "csv-parser";
-import axios from "axios";
 import async from "async";
 import Request from "../modal/Request";
 import uniqid from "uniqid";
@@ -15,13 +14,10 @@ class NewProcess {
       if (!filePath) {
         return res.send("error in file , try agian !");
       }
+      let headersValidated = false;
 
       const UniqueId = uniqid();
-      await Request.create({
-        reqId: UniqueId,
-        information: [],
-        status: "processing",
-      });
+
       const Process = async () => {
         const results: any[] = [];
 
@@ -30,7 +26,7 @@ class NewProcess {
 
         readStream.pipe(parser);
 
-        let headersValidated = false;
+        headersValidated = false;
         const expectedHeaders = ["S.No.", "Product Name", "Input Image Urls"];
 
         parser.on("headers", (headers) => {
@@ -44,6 +40,11 @@ class NewProcess {
               .send(
                 "Invalid CSV headers. Expected: S.No., Product Name, Input Image Urls"
               );
+              fs.unlink(filePath, (err) => {
+                if (err) {
+                  console.error(err);
+                }
+              });
           }
         });
 
@@ -103,18 +104,26 @@ class NewProcess {
               }
             );
 
-            fs.unlink(filePath, (err) => {
-              if (err) {
-                console.error(err);
-              }
-            });
+        
           });
         });
       };
 
       Process();
+      await Request.create({
+        reqId: UniqueId,
+        information: [],
+        status: "processing",
+      });
+      if(headersValidated){
+        res.status(200).json({ valid: true, RequestId: UniqueId });
+      }
 
-      res.status(200).json({ valid: true, RequestId: UniqueId });
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.error(err);
+        }
+      });
     } catch (error) {
       console.log(error);
     }
