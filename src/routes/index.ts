@@ -4,7 +4,8 @@ import NewProcess from "../controllers/NewProcess";
 
 const router = express.Router();
 
-const upload = multer({ dest: "upload/" });
+const storage = multer.memoryStorage(); 
+const upload = multer({ storage });
 
 router.post("/process", upload.single("file"), NewProcess.SendNewProcess);
 
