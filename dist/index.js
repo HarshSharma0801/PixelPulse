@@ -26,7 +26,7 @@ db.on("open", function () {
     console.log("Successfull Connected to Database ");
 });
 app.use(routes_1.default);
-app.listen(5000, () => {
-    console.log("server is live at 5000");
+app.listen(process.env.PORT, () => {
+    console.log("server is live at " + process.env.PORT);
 });
 //# sourceMappingURL=index.js.map

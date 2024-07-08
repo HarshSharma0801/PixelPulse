@@ -28,6 +28,6 @@ db.on("open", function () {
 
 app.use(router);
 
-app.listen(5000, () => {
-  console.log("server is live at 5000");
+app.listen(process.env.PORT, () => {
+  console.log("server is live at " + process.env.PORT);
 });
