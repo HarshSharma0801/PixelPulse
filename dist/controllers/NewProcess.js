@@ -13,19 +13,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const process_1 = __importDefault(require("../process"));
-const fs_1 = __importDefault(require("fs"));
 const csv_parser_1 = __importDefault(require("csv-parser"));
 const async_1 = __importDefault(require("async"));
 const Request_1 = __importDefault(require("../modal/Request"));
 const uniqid_1 = __importDefault(require("uniqid"));
+const stream_1 = __importDefault(require("stream"));
 class NewProcess {
     constructor() {
         this.SendNewProcess = (req, res) => __awaiter(this, void 0, void 0, function* () {
-            var _a;
             try {
-                const filePath = (_a = req.file) === null || _a === void 0 ? void 0 : _a.path;
-                if (!filePath) {
-                    return res.send("error in file , try agian !");
+                const file = req.file;
+                if (!file) {
+                    return res.send("error in file , try again!");
                 }
                 const UniqueId = (0, uniqid_1.default)();
                 yield Request_1.default.create({
@@ -35,15 +34,16 @@ class NewProcess {
                 });
                 const Process = () => __awaiter(this, void 0, void 0, function* () {
                     const results = [];
-                    const readStream = fs_1.default.createReadStream(filePath);
+                    const bufferStream = new stream_1.default.PassThrough();
+                    bufferStream.end(file.buffer);
                     const parser = (0, csv_parser_1.default)();
-                    readStream.pipe(parser);
+                    bufferStream.pipe(parser);
                     let headersValidated = false;
                     const expectedHeaders = ["S.No.", "Product Name", "Input Image Urls"];
                     parser.on("headers", (headers) => {
                         headersValidated = expectedHeaders.every((header, index) => header === headers[index]);
                         if (!headersValidated) {
-                            readStream.destroy();
+                            bufferStream.destroy();
                             res
                                 .status(400)
                                 .send("Invalid CSV headers. Expected: S.No., Product Name, Input Image Urls");
@@ -86,11 +86,6 @@ class NewProcess {
                             yield Request_1.default.findOneAndUpdate({ reqId: UniqueId }, {
                                 information: processedResults,
                                 status: "processed",
-                            });
-                            fs_1.default.unlink(filePath, (err) => {
-                                if (err) {
-                                    console.error(err);
-                                }
                             });
                         }));
                     }));
