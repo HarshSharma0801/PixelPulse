@@ -66,7 +66,7 @@ class NewProcess {
               const processedImageUrls: string[] = [];
               for (let index = 0; index < images.length; index++) {
                 const url = images[index];
-                const imageName = `${sNo}_${index}_${new Date()}.jpg`;
+                const imageName = `${sNo}_${index}.jpg`;
                 const processedUrl = await ProcessImage(url, imageName);
                 if (processedUrl) {
                   processedImageUrls.push(processedUrl);
